@@ -7,8 +7,14 @@ void procA ()
 {
 	//receive the message envelope from CCI when user types in 's'
 	//then deallocate the received message envelope
+	ps("1");
 	MsgEnv *init_msg = (MsgEnv*)receive_message();
+
+	while (init_msg==NULL) {
+		init_msg = (MsgEnv*)receive_message();
+	}
 	release_message_env(init_msg);
+	ps("2");
 
 	//initialize counter
 	int num_count = 0;
@@ -27,6 +33,7 @@ void procA ()
 		//increment the counter and yield the processor to other processes
 		send_message(PROCB_ID, toB);
 		num_count++;
+		ps("test2");
 		release_processor();
 	}
 }

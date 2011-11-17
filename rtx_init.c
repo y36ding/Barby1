@@ -10,10 +10,10 @@ InitProc init_table[PROCESS_COUNT] = {
 		{"Keyboard I proc\0", KB_I_PROCESS_ID, 0, TRUE, kbd_i_proc},
 		{"CRT I proc\0", CRT_I_PROCESS_ID, 0, TRUE, crt_i_proc},
 		{"P Process\0", P_PROCESS_ID, 0, FALSE, processP},
-		{"Timer I process\0", TIMER_I_PROCESS_ID,0, TRUE, timer_i_proc}
-		/*{"Process A\0", PROCA_ID,0, FALSE},
-		{"process B\0", PROCB_ID,0, FALSE},
-		{"Process C\0", PROCC_ID,0, FALSE},*/
+		{"Timer I process\0", TIMER_I_PROCESS_ID,0, TRUE, timer_i_proc},
+		{"Process A\0", PROCA_ID,0, FALSE, procA},
+		{"process B\0", PROCB_ID,0, FALSE, procB},
+		{"Process C\0", PROCC_ID,0, FALSE, procC},
 
 };
 
