@@ -77,13 +77,11 @@ void kbd_i_proc(int signum)
 
 	ps("Inside keyboard I proc");
 	MsgEnv* env = (MsgEnv*)k_receive_message();
-	pm(env);
 
 	if (env != NULL)
 	{
 		env->data[0] = '\0';
 		ps("Envelope recognized by kbd_i_proc");
-		pm(env);
 
 		// Loop until writing in shared memory is done
 		while (in_mem_p_key->ok_flag==OKAY_TO_WRITE);
@@ -107,8 +105,6 @@ void kbd_i_proc(int signum)
 
 		in_mem_p_key->length = 0;
 		in_mem_p_key->ok_flag = OKAY_TO_WRITE; // okay to write again
-		k_return_from_switch();
-		return;
 	}
 	k_return_from_switch();
 	return;

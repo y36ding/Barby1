@@ -20,8 +20,8 @@ void procA ()
 		//set the data field of the msg env equal to the counter
 		MsgEnv *toB = (MsgEnv*)request_msg_env();
 		toB->msg_type = COUNT_REPORT;
-		//toB->data = num_count;
-		toB->time_delay = num_count;
+		toB->data[0] = (char)num_count;
+		toB->data[1] = '\0';
 
 		//send the message envelope to B
 		//increment the counter and yield the processor to other processes
@@ -37,7 +37,7 @@ void procB()
 	while(1)
 	{
 		//Receive a message envelope
-		MsgEnv *msg_forward = receive_message();
+		MsgEnv *msg_forward = (MsgEnv*)receive_message();
 
 		//Send the message to proc_C
 		send_message(PROCC_ID, msg_forward);
@@ -47,7 +47,7 @@ void procB()
 void procC()
 {
 	//create local message queue to store msg envs in FIFO order
-	MsgEnvQ *msgQueue = MsgEnvQ_create();
+	MsgEnvQ *msgQueue = (MsgEnvQ*)MsgEnvQ_create();
 
 	//initialize msg env pointers to keep track of messages
 	MsgEnv *msg_env;
@@ -59,12 +59,12 @@ void procC()
 
 		if(msgQueue->head == NULL)
 		{
-			msg_env = receive_message();
+			msg_env = (MsgEnv*)receive_message();
 			MsgEnvQ_enqueue(msgQueue, msg_env);
 		}
 
 		//dequeue the first msg on the local msg queue
-		msg_env = MsgEnvQ_dequeue(msgQueue);
+		msg_env = (MsgEnv*)MsgEnvQ_dequeue(msgQueue);
 
 
 		//check if the dequeued msg type is 'COUNT_REPORT'
@@ -76,15 +76,17 @@ void procC()
 			{
 				//get a message envelope, set the data to 'Process C'
 				//send it to display on the screen
-				msg_env2 = request_msg_env();
-				msg_env2->data = '\nProcess C\n';
+				msg_env2 = (MsgEnv*)request_msg_env();
+				char tempData[20] = "Process C";
+				memcpy(msg_env2->data,tempData,strlen(tempData));
+				//msg_env2->data = '\nProcess C\n';
 				send_console_chars(msg_env2);
 
 				//wait for output confirmation with 'DISPLAY_ACK' msg type
 				while(1)
 				{
 					//receive message, possibly from send_console_chars or proc_B
-					msg_env2 = receive_message();
+					msg_env2 = (MsgEnv*)receive_message();
 
 					//check for msg type 'env2LAY_ACK' or 'COUNT_REPORT'
 					if (msg_env2->msg_type == DISPLAY_ACK)
@@ -95,14 +97,14 @@ void procC()
 						//*****what do i do here?***** print error
 						if(stat != SUCCESS)
 						{
-							printf('\nWHAT?!?! something went wrong with the delay request...\n');
+							printf("\nWHAT?!?! something went wrong with the delay request...\n");
 						}
 
 						//resume after getting a 10seconds delay request
 						while(1)
 						{
 							//reuse the msg_env2 pointer to get returned msg env from delay request
-							msg_env2 = receive_message();
+							msg_env2 = (MsgEnv*)receive_message();
 
 							//check if its msg_type is 'WAKEUP_10' or 'COUNT_REPORT'
 							if(msg_env2->msg_type == WAKEUP10)

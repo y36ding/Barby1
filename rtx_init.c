@@ -132,9 +132,9 @@ int init_all_lists()
 
 	sigset(SIGUSR1,kbd_i_proc);
 	sigset(SIGUSR2,crt_i_proc);
-	sigset(SIGALRM,timer_i_proc);
+	//sigset(SIGALRM,timer_i_proc);
 
-	alarm(1);
+	//alarm(1);
 
 
 	return init_status ;

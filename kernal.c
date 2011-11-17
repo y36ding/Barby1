@@ -65,9 +65,8 @@ int k_send_message(int dest_process_id, MsgEnv *msg_envelope)
 	MsgEnvQ_enqueue(dest_pcb->rcv_msg_queue, msg_envelope);
 	if (DEBUG==1){
 		printf("message SENT on enqueued on PID %i and its size is %i\n",dest_pcb->pid,MsgEnvQ_size(dest_pcb->rcv_msg_queue));
-		pm(msg_envelope);
 	}
-	k_log_event(msg_envelope, &send_trace_buf);
+	//k_log_event(msg_envelope, &send_trace_buf);
 	return SUCCESS;
 }
 
@@ -77,13 +76,16 @@ MsgEnv* k_receive_message()
 		fflush(stdout);
 		//printf("Current PCB msgQ size is %i for PID %i\n", MsgEnvQ_size(current_process->rcv_msg_queue), current_process->pid );
 	}
-	if (current_process->is_i_process == TRUE || current_process->state == NEVER_BLK_RCV)
-		return NULL;
 
 	MsgEnv* ret = NULL;
 	if (MsgEnvQ_size(current_process->rcv_msg_queue) > 0){
 		ret = (MsgEnv*)MsgEnvQ_dequeue(current_process->rcv_msg_queue);
-		k_log_event(ret, &receive_trace_buf);
+		//k_log_event(ret, &receive_trace_buf);
+	}
+	else
+	{
+		if (current_process->is_i_process == TRUE || current_process->state == NEVER_BLK_RCV)
+			return ret;
 	}
 	return ret;
 }
@@ -265,10 +267,13 @@ int k_log_event(TraceBuffer* trace_buf, MsgEnv *env)
 		return NULL_ARGUMENT;
 
 	int tail = get_trace_tail(trace_buf);
+	ps("env pid");
+	pi(env->sender_pid);
 	trace_buf->trace_log[tail].dest_pid = env->dest_pid;
 	trace_buf->trace_log[tail].sender_pid = env->sender_pid;
 	trace_buf->trace_log[tail].msg_type = env->msg_type;
 	trace_buf->trace_log[tail].time_stamp = 4; // Should this be a RTX function?
+	printf("trace buffer %p",trace_buf);
 	if (trace_buf->count == TRACE_LOG_SIZE)
 		trace_buf->head = (trace_buf->head + 1)%TRACE_LOG_SIZE;
 	else

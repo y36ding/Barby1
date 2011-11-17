@@ -48,8 +48,6 @@ void processP()
 		while(env==NULL) {
 			usleep(tWait);
 
-			//current_process = (pcb*)pid_to_pcb(P_PROCESS_ID);
-
 			env = receive_message();
 			if (env != NULL && env->msg_type == DISPLAY_ACK)
 			{
@@ -90,10 +88,10 @@ int main()
     	cleanup();
     }
 
-    MsgEnv* timer_env = request_msg_env();
+    /*MsgEnv* timer_env = request_msg_env();
     k_request_delay(3,WAKEUP10,timer_env);
     MsgEnv* timer_env2 = request_msg_env();
-    k_request_delay(6,WAKEUP10,timer_env2);
+    k_request_delay(6,WAKEUP10,timer_env2);*/
 
     processP();
 
