@@ -44,6 +44,7 @@ int init_all_lists()
 
 	free_env_queue = (MsgEnvQ*)MsgEnvQ_create();
 	displayQ = (MsgEnvQ*)MsgEnvQ_create();
+	blocked_queue = (MsgEnvQ*)MsgEnvQ_create();
 
 	for (i = 0; i < PROCESS_COUNT; ++i)
 	{
@@ -289,13 +290,15 @@ void cleanup()
     // We try to ensure we don't try to free memory that was never allocated by always checking whether the pointer
     // is NULL or not
 	int i;
-	ps("Freeing All Queues");
+	//ps("Freeing All Queues");
 	MsgEnvQ_destroy(free_env_queue);
-	ps("Freeing PCBs\n");
+	MsgEnvQ_destroy(blocked_queue);
+	free(timeout_q);
+	//ps("Freeing PCBs\n");
 	for (i = 0; i < PROCESS_COUNT; ++i)
 	{
 #if DEBUG
-		printf("Freeing pcb: %i\n", i+1);
+		//printf("Freeing pcb: %i\n", i+1);
 #endif
 		// deallocate memory until we reach location where allocation may have failed
 		if (pcb_list[i] == NULL)

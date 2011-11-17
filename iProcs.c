@@ -77,16 +77,24 @@ void kbd_i_proc(int signum)
 
 	ps("Inside keyboard I proc");
 	MsgEnv* env = (MsgEnv*)k_receive_message();
+	pm(env);
 
 	if (env != NULL)
 	{
+		env->data[0] = '\0';
 		ps("Envelope recognized by kbd_i_proc");
+		pm(env);
 
 		// Loop until writing in shared memory is done
 		while (in_mem_p_key->ok_flag==OKAY_TO_WRITE);
 
 		//copies into first parameter from second parameter of length+1 bytes
-		memcpy(env->data,in_mem_p_key->indata,in_mem_p_key->length + 1);
+
+		if (in_mem_p_key->length != 0) {
+			memcpy(env->data,in_mem_p_key->indata,in_mem_p_key->length + 1);
+		} else {
+			env->data[0] = '\0';
+		}
 
 		if (!strcmp(in_mem_p_key->indata,"t")) {
 			die(SIGINT);
@@ -97,6 +105,7 @@ void kbd_i_proc(int signum)
 
 		ps("Keyboard sent message");
 
+		in_mem_p_key->length = 0;
 		in_mem_p_key->ok_flag = OKAY_TO_WRITE; // okay to write again
 		k_return_from_switch();
 		return;
@@ -117,12 +126,12 @@ void timer_i_proc(int signum) {
 	//while(1)
 	//  {
 	        // Increment the time by recording a tick
-			ps("-----------------In Timer-------------------");
+			//ps("-----------------In Timer-------------------");
 	        clock_inc_time();
 
 	        MsgEnv* msg_env = (MsgEnv*)k_receive_message();
 
-	        pm(msg_env);
+	        //pm(msg_env);
 
 	        while (msg_env != NULL && msg_env->msg_type==WAKEUP10)
 	        {
@@ -141,7 +150,11 @@ void timer_i_proc(int signum) {
 	            // Send the envelope back
 	        	fflush(stdout);
 	        	msg_env->msg_type = WAKEUP10;
-	        	msg_env->data = "Time expired!\0";
+
+	        	//char
+	        	char tempData[50] = "Time Expired!\0";
+	        	memcpy(msg_env->data,tempData,strlen(tempData)+1);
+	        	//msg_env->data[0] = 'U';
 	            k_send_message(msg_env->sender_pid, msg_env);
 	        }
 

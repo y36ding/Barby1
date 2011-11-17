@@ -80,6 +80,8 @@ int main (int argc, char * argv[])
 					buf_index = 0;  // for now, just restart
 					while( in_mem_p->ok_flag == DONE_WRITING)
 						usleep(100000);
+					in_mem_p->length = 0;
+					buf_index = 0;
 				}
 	}
 		
