@@ -16,6 +16,7 @@
 #include <string.h>
 
 #include <unistd.h>
+#include <setjmp.h>
 
 #include "iProcs.h"
 #include "kbcrt.h"
@@ -34,6 +35,7 @@
 #define PROCA_ID			   4
 #define PROCB_ID			   5
 #define PROCC_ID			   6
+#define NULL_PROCESS_ID 7
 
 // RTX Constants
 #define MSG_ENV_SIZE 100
@@ -42,6 +44,7 @@
 #define PROCESS_COUNT 7
 #define STACK_SIZE 100
 #define NUM_PRIORITIES 4
+#define TRACE_LOG_SIZE 16
 
 // error codes
 #define SUCCESS 0
@@ -60,6 +63,9 @@ typedef int bool;
 #define DEBUG 0
 
 void die(int signal);
+typedef void (*pc)();
+void processP();
+
 
 typedef enum msg_type {
     CONSOLE_INPUT, DISPLAY_ACK, COUNT_REPORT, WAKEUP10
@@ -91,8 +97,12 @@ typedef struct process_control_block {
 	char* name;
 	MsgEnvQ*  rcv_msg_queue;
 	struct process_control_block* next;
+	jmp_buf* buf;
+	pc pc_location;
+   	char * stack;
 	int a_count;
 	bool is_i_process;
+	struct process_control_block* next_pcb;
 } pcb;
 
 typedef struct init_proc
@@ -101,6 +111,7 @@ typedef struct init_proc
 	int pid;
 	int priority;
 	bool is_i_process;
+	pc pc_location;
 }InitProc;
 
 typedef struct proc_queue {
@@ -113,10 +124,24 @@ typedef struct proc_pq {
     proc_queue **priority_queues;
 } proc_pq;
 
+typedef struct trace_log{
+    int 	dest_pid;
+    int 	sender_pid;
+    MsgType 	msg_type;
+    int time_stamp;
+} TraceLog;
+
+typedef struct circular_trace{
+	int head;
+	int count;
+	TraceLog trace_log[TRACE_LOG_SIZE];
+}TraceBuffer;
+
+//initialize trace buffers
+TraceBuffer send_trace_buf;
+TraceBuffer receive_trace_buf;
+
 // global variables
-
-proc_pq* ProcessPQ;
-
 
 pcb* current_process;
 pcb* prev_process;
@@ -124,6 +149,7 @@ MsgEnvQ* free_env_queue;
 MsgEnvQ* blocked_queue;
 pcb* pcb_list[PROCESS_COUNT];
 MsgEnvQ* displayQ;
+proc_queue* rdy_proc_queue;
 
 // globals
 inputbuf * in_mem_p_key;	// pointer to structure that is the shared memory

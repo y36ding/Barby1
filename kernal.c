@@ -181,3 +181,141 @@ int k_request_delay(int delay, int wakeup_code, MsgEnv *msg_env)
     return k_send_message(TIMER_I_PROCESS_ID, msg_env);
 }
 
+
+void k_process_switch(ProcessState next_state)
+{
+	pcb* next_process = proc_q_dequeue(rdy_proc_queue);
+	// Note this is not checking for null process. It is just for checking th dequeue
+	// was successful
+	if (next_process != NULL)
+	{
+		current_process->state = next_state;
+		pcb* old_process = current_process;
+		current_process = next_process;
+		k_context_switch(old_process->buf, next_process->buf);
+	}
+}
+
+void k_context_switch(jmp_buf* prev, jmp_buf* next)
+{
+	int val = setjmp(*prev);
+	if (val == 0)
+	{
+		longjmp(*next, 1);
+	}
+}
+
+int k_release_processor()
+{
+	proc_q_enqueue(current_process);
+	k_process_switch(READY);
+}
+
+int k_request_process_status(MsgEnv *env)
+{
+	char* status = (char*)env->data;
+	int i;
+	for (i = 0; i < PROCESS_COUNT; ++i)
+	{
+		*status = pcb_list[i]->pid;
+		status ++;
+		*status = pcb_list[i]->state;
+		status++;
+		*status = pcb_list[i]->priority;
+		status++;
+	}
+	return SUCCESS;
+}
+
+int k_terminate()
+{
+	cleanup();
+}
+
+int k_change_priority(int target_priority, int target_pid)
+{
+	if (target_priority >= 3 || target_priority < 0)
+			return ILLEGAL_ARGUMENT;
+
+	pcb* target_pcb = pid_to_pcb(target_pid);
+	if (target_pcb->pid == NULL_PROCESS_ID || target_pcb->is_i_process == TRUE)
+		return ILLEGAL_ARGUMENT;
+
+	// if on a ready queue, take if off, change priority, and put it back on
+    if(target_pcb->state == READY)
+    {
+        proc_q_dequeue(rdy_proc_queue, target_pcb);
+        target_pcb->priority = target_priority;
+        proc_q_enqueue(rdy_proc_queue, target_pcb);
+    }
+    else
+    {
+    	target_pcb->priority = target_priority;
+    }
+    return SUCCESS;
+}
+int k_get_trace_buffer(MsgEnv* env)
+{
+ return NULL;
+}
+
+/*
+int get_trace_tail(TraceBuffer* trace_buf)
+{
+	return (trace_buf.head + trace_buff.count)%TRACE_LOG_SIZE;
+}
+
+//env trace helper function for k_send and k_recieve to log events
+int k_log_event(TraceBuffer* trace_buf, MsgEnv *env)
+{
+	if (env == NULL || trace_buf == NULL)
+		return NULL_ARGUMENT;
+
+	int tail = get_trace_tail(trace_buf);
+	trace_buf->trace_log[tail].dest_pid = env.dest_pid;
+	trace_buf->trace_log[tail].sender_pid = env.sender_pid;
+	trace_buf->trace_log[tail].msg_type = env.msg_type;
+	trace_buf->trace_log[tail].time_stamp = 4; // Should this be a RTX function?
+	if (count == TRACE_LOG_SIZE)
+		trace_buf.head = (head + 1)%TRACE_LOG_SIZE;
+	else
+		count++;
+	return SUCCESS;
+}
+
+int k_get_trace_buffers( MsgEnv *msg_env )
+{
+	if (msg_env == NULL)
+		return NULL;
+
+    int send_tail = get_trace_tail(send_trace_buf);
+    int receive_tail = get_trace_tail(receive_trace_buf);
+
+    // Assign the memory locations which will be written to in the message envelope
+    TraceLog* send_log_stack = (TraceLog*) msg_env->msg;
+    i = send_trace_buf.head;
+    while(i != send_tail)
+    {
+    	TraceLog* log = send_trace_buf.trace_log[i];
+    	send_log_stack->dest_pid = log->dest_pid;
+    	send_log_stack->msg_type = log->msg_type;
+    	send_log_stack->sender_pid = log->sender_pid;
+    	send_log_stack->time_stamp = log->time_stamp;
+    	send_log_stack++;
+    	i = (i+1)%TRACE_LOG_SIZE;
+    }
+
+    TraceLog* receive_log_stack = send_log_stack + send_trace_buf->count;
+    i =  receive_trace_buf.head;
+    while(i != receive_tail)
+    {
+    	TraceLog* log = receive_trace_buf.trace_log[i];
+    	receive_log_stack->dest_pid = log->dest_pid;
+    	receive_log_stack->msg_type = log->msg_type;
+    	receive_log_stack->sender_pid = log->sender_pid;
+    	receive_log_stack->time_stamp = log->time_stamp;
+    	receive_log_stack++;
+    	i = (i+1)%TRACE_LOG_SIZE;
+    }
+    return CODE_SUCCESS;
+}*/
