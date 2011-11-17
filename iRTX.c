@@ -12,23 +12,34 @@
 #include "rtx_init.h"
 #include "procABC.h"
 
+void test_process()
+{
+	ps("In Test Process");
+	k_release_processor();
+
+}
+
 void processP()
 {
-
-	MsgEnv* env = (MsgEnv*) request_msg_env();
-	send_message(PROCA_ID,env);
+	//ps("In process P");
+	//MsgEnv* env = (MsgEnv*) request_msg_env();
+	//send_message(PROCA_ID,env);
 
 	//MsgEnv* env2 = (MsgEnv*)receive_message();
 	//while (env2==NULL) {
 	//	env2 = (MsgEnv*)receive_message();
 	//}
 
-	return;
+	//return;
 
-	/*
+
     ps("ProcessP Started");
+    pp(current_process);
+	k_release_processor();
+	ps("Back in process P");
     const tWait = 500000;
 	MsgEnv* env;
+	ps("Requesting env in Proc P");
 	env = request_msg_env();
     ps("Envelopes Allocated");
 
@@ -52,6 +63,9 @@ void processP()
 			}
 		}
 
+
+		ps("Back to Process P after processing switching from test");
+
 		// Send the input to CRT
 		send_console_chars(env);
 
@@ -71,7 +85,7 @@ void processP()
 		}
 	}
     release_message_env(env);
-    */
+
 }
 
 void die(int signal)
@@ -95,10 +109,11 @@ int main()
 		cleanup();
 	}
 
-    if (init_mmaps() != SUCCESS) {
-    	printf("Failed to init mmaps.\n");
-    	cleanup();
-    }
+	if (init_mmaps() != SUCCESS) {
+		    	printf("Failed to init mmaps.\n");
+		    	cleanup();
+	}
+
 
     /*MsgEnv* timer_env = request_msg_env();
     k_request_delay(3,WAKEUP10,timer_env);
@@ -106,11 +121,14 @@ int main()
     k_request_delay(6,WAKEUP10,timer_env2);*/
 
 
-    processP();
+    //processP();
+    //ps("PROC A");
 
-    ps("PROC A");
+    ps("1");
+    pp(current_process);
+    k_process_switch(READY);
 
-   // procA();
+    ps("6");
     //MsgEnv *env = request_msg_env();
     //send_message(PROCA_ID,env);
 

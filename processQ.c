@@ -59,21 +59,25 @@ int proc_q_enqueue(proc_queue * queue, pcb * pcb)
 {
     if (queue == NULL || pcb == NULL)
     {
+    	ps("1");
         return NULL_ARGUMENT;
     }
 
     assert(pcb->next == NULL);
     if (proc_q_is_empty(queue))
     {
+    	ps("2");
         queue->head = pcb;
     }
     else
     {
+    	ps("3");
         queue->tail->next = pcb;
     }
     queue->tail = pcb;
     queue->tail->next = NULL;
-
+    ps("Enqued");
+    pp(pcb);
     return SUCCESS;
 }
 

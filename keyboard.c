@@ -62,9 +62,9 @@ int main (int argc, char * argv[])
 	in_mem_p->ok_flag = OKAY_TO_WRITE;
 	do
 	{
-		fflush(stdout);
-		printf(">>");
-		fflush(stdout);
+		//fflush(stdout);
+		//printf(">>");
+		//fflush(stdout);
 		c = getchar();
 		if ( c != '\n') {
 					if( buf_index < MAXCHAR-1 ) {

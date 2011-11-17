@@ -12,9 +12,10 @@ InitProc init_table[PROCESS_COUNT] = {
 		{"CRT I proc\0", CRT_I_PROCESS_ID, 0, TRUE, crt_i_proc},
 		{"P Process\0", P_PROCESS_ID, 0, FALSE, processP},
 		{"Timer I process\0", TIMER_I_PROCESS_ID,0, TRUE, timer_i_proc},
-		{"Process A\0", PROCA_ID,0, FALSE, procA},
-		{"process B\0", PROCB_ID,0, FALSE, procB},
-		{"Process C\0", PROCC_ID,0, FALSE, procC},
+		{"Process A\0", PROCA_ID,1, FALSE, procA},
+		{"process B\0", PROCB_ID,1, FALSE, procB},
+		{"Process C\0", PROCC_ID,1, FALSE, procC},
+		{"Test Process\0", TEST_PROCESS_ID, 0, FALSE, test_process}
 
 };
 
@@ -40,14 +41,14 @@ int init_all_lists()
 {
 	int i;
 	int init_status = SUCCESS;
-	jmp_buf* kernel_buf;
+	jmp_buf kernel_buf;
 
 	free_env_queue = (MsgEnvQ*)MsgEnvQ_create();
 	displayQ = (MsgEnvQ*)MsgEnvQ_create();
 
 	blocked_queue = (MsgEnvQ*)MsgEnvQ_create();
 
-	rdy_proc_queue =  (proc_queue*)proc_q_create();
+	rdy_proc_queue =  (proc_pq*)proc_pq_create();
 
 	send_trace_buf.head = 0;
 	send_trace_buf.count = 0;
@@ -70,29 +71,35 @@ int init_all_lists()
 		pcb_list[i]->rcv_msg_queue = (MsgEnvQ*)MsgEnvQ_create();
 		pcb_list[i]->is_i_process = init_table[i].is_i_process;
 		pcb_list[i]->location = init_table[i].pc_location;
-		pcb_list[i]->stack = malloc(sizeof(STACK_SIZE)) + STACK_SIZE - STK_OFFSET; // stack grows down
+		pcb_list[i]->stack = malloc(sizeof(STACK_SIZE));
 		pcb_list[i]->next_pcb = NULL;
 		pcb_list[i]->a_count = 0;
 
-        // Initialize the stack and start pc
-      /*  if (setjmp(kernel_buf) ==  0)
-        {
-            __asm__("movl %0, %%esp":"=g" (pcb_list[i]->stack));
-            if (setjmp(pcb_list[i]->buf) == 0)
-            {
-                longjmp(kernel_buf, 1);
-            }
-            else
-            {
-                current_process->location();
-#ifdef DEBUG_KERN
-                printf("ERROR: Process <%s> stopped executing! \n",
-                        current_process->name);
+		if (!(pcb_list[i]->is_i_process)) {
+
+			proc_pq_enqueue(rdy_proc_queue, pcb_list[i]);
+
+			char* stack_location = pcb_list[i]->stack + STACK_SIZE - STK_OFFSET; // stack grows down
+			// Initialize the stack and start pc
+			if (setjmp(kernel_buf) == 0) {
+				__asm__("movl %0, %%esp":"=m" (stack_location));
+				if (setjmp(pcb_list[i]->buf) == 0) {
+					longjmp(kernel_buf, 1);
+				} else {
+					ps("Longjump worked");
+					//current_process->location();
+					current_process->location();
+#ifdef DEBUG
+					printf("Current Process is: %i", current_process->pid);
 #endif
-                k_terminate();
-            }
-        }*/
+					//k_terminate();
+				}
+
+			}
+
+		}
 	}
+
 
 	for (i = 0; i < MSG_ENV_COUNT; i++)
 	{
@@ -115,9 +122,10 @@ int init_all_lists()
 		// deal with non null later
 	}
 
+	ps("Done context shit!");
 
-
-	current_process = (pcb*)pid_to_pcb(P_PROCESS_ID);
+	//current_process = (pcb*)pid_to_pcb(P_PROCESS_ID);
+	current_process = (pcb*)pid_to_pcb(PROCA_ID);
 	current_process->state = NEVER_BLK_RCV;
 	prev_process = current_process;
 
@@ -324,7 +332,7 @@ void cleanup()
 	free(timeout_q);
 
 	MsgEnvQ_destroy(displayQ);
-	proc_q_destroy(rdy_proc_queue);
+	proc_pq_destroy(rdy_proc_queue);
 
 	for (i = 0; i < PROCESS_COUNT; ++i)
 	{

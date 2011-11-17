@@ -28,6 +28,7 @@
 #include <stdlib.h>
 
 
+
 // Process IDs
 #define KB_I_PROCESS_ID        0
 #define CRT_I_PROCESS_ID       1
@@ -37,6 +38,7 @@
 #define PROCB_ID			   5
 #define PROCC_ID			   6
 #define NULL_PROCESS_ID 7
+#define TEST_PROCESS_ID 8
 
 // RTX Constants
 #define MSG_ENV_SIZE 100
@@ -44,7 +46,7 @@
 #define NUM_PRIORITY_LEVEL 5
 #define STACK_SIZE              (4*4096)
 #define STK_OFFSET            16
-#define PROCESS_COUNT 7
+#define PROCESS_COUNT 8
 #define NUM_PRIORITIES 4
 #define TRACE_LOG_SIZE 16
 
@@ -67,6 +69,7 @@ typedef int bool;
 void die(int signal);
 typedef void (*pc)();
 void processP();
+void test_process();
 
 
 typedef enum msg_type {
@@ -99,7 +102,7 @@ typedef struct process_control_block {
 	char* name;
 	MsgEnvQ*  rcv_msg_queue;
 	struct process_control_block* next;
-	jmp_buf* buf;
+	jmp_buf buf;
 	pc location;
    	char * stack;
 	int a_count;
@@ -151,7 +154,7 @@ MsgEnvQ* free_env_queue;
 MsgEnvQ* blocked_queue;
 pcb* pcb_list[PROCESS_COUNT];
 MsgEnvQ* displayQ;
-proc_queue* rdy_proc_queue;
+proc_pq* rdy_proc_queue;
 
 // globals
 inputbuf * in_mem_p_key;	// pointer to structure that is the shared memory

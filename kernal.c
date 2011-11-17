@@ -14,6 +14,7 @@ pcb* pid_to_pcb(int pid)
 		case 4 : return pcb_list[4];
 		case 5 : return pcb_list[5];
 		case 6 : return pcb_list[6];
+		case 7: return pcb_list[7];
 		default: return NULL;
 
 	}
@@ -80,12 +81,12 @@ MsgEnv* k_receive_message()
 {
 	if (DEBUG==1) {
 		fflush(stdout);
-		printf("Current PCB msgQ size is %i for PID %i\n", MsgEnvQ_size(current_process->rcv_msg_queue), current_process->pid );
+		//printf("Current PCB msgQ size is %i for PID %i\n", MsgEnvQ_size(current_process->rcv_msg_queue), current_process->pid );
 	}
 
 	MsgEnv* ret = NULL;
 
-	printf("===CURRENT PROCESS = %i\n",current_process->pid);
+	//printf("===CURRENT PROCESS = %i\n",current_process->pid);
 
 	if (MsgEnvQ_size(current_process->rcv_msg_queue) > 0){
 		ret = (MsgEnv*)MsgEnvQ_dequeue(current_process->rcv_msg_queue);
@@ -166,10 +167,12 @@ void atomic(bool state)
 int k_pseudo_process_switch(int pid)
 {
 	pcb* p = (pcb*)pid_to_pcb(pid);
+	pp(p);
 	if (p == NULL)
 		return ILLEGAL_ARGUMENT;
 	prev_process = current_process;
 	current_process = p;
+	pp(p);
 	return SUCCESS;
 }
 
@@ -193,31 +196,43 @@ int k_request_delay(int delay, int wakeup_code, MsgEnv *msg_env)
 
 void k_process_switch(ProcessState next_state)
 {
-	pcb* next_process = (pcb*)proc_q_dequeue(rdy_proc_queue);
-	// Note this is not checking for null process. It is just for checking th dequeue
+	pcb* next_process = (pcb*)proc_pq_dequeue(rdy_proc_queue);
+	// Note this is not checking for null process. It is just for checking the dequeue
 	// was successful
+	pp(next_process);
 	if (next_process != NULL)
 	{
 		current_process->state = next_state;
 		pcb* old_process = current_process;
 		current_process = next_process;
-		k_context_switch(old_process->buf, next_process->buf);
+		k_context_switch(&old_process->buf, &next_process->buf);
+		ps("Back into process_switch");
 	}
+
 }
 
 void k_context_switch(jmp_buf* prev, jmp_buf* next)
 {
+	ps("3");
 	int val = setjmp(*prev);
+	printf("The value of val is: %i\n",val);
+	ps ("4");
+	pp(current_process);
 	if (val == 0)
 	{
 		longjmp(*next, 1);
 	}
+	ps("Skipped longjump");
+	pp(current_process);
+
 }
 
 int k_release_processor()
 {
-	proc_q_enqueue(current_process);
+	proc_pq_enqueue(rdy_proc_queue,current_process);
+	pp(current_process);
 	k_process_switch(READY);
+	ps("back in release processor");
 }
 
 int k_request_process_status(MsgEnv *env)
@@ -293,7 +308,7 @@ int k_log_event(TraceBuffer* trace_buf, MsgEnv *env)
 int k_get_trace_buffer( MsgEnv *msg_env )
 {
 	if (msg_env == NULL)
-		return NULL;
+		return 1;
 
     int send_tail = get_trace_tail(&send_trace_buf);
     int receive_tail = get_trace_tail(&receive_trace_buf);
