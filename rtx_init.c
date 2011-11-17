@@ -298,16 +298,13 @@ void cleanup()
 	int i;
 	//ps("Freeing All Queues");
 	MsgEnvQ_destroy(free_env_queue);
-<<<<<<< HEAD
+
 	MsgEnvQ_destroy(blocked_queue);
 	free(timeout_q);
-	//ps("Freeing PCBs\n");
-=======
+
 	MsgEnvQ_destroy(displayQ);
 	proc_q_destroy(rdy_proc_queue);
 
-	ps("Freeing PCBs\n");
->>>>>>> e59b8b19732a9ec47240a22c53f023cf523639a1
 	for (i = 0; i < PROCESS_COUNT; ++i)
 	{
 #if DEBUG

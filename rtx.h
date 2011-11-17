@@ -20,6 +20,7 @@
 
 #include "iProcs.h"
 #include "kbcrt.h"
+#include "procABC.h"
 
 #include <stdint.h>
 #include <stddef.h>
@@ -60,7 +61,7 @@ typedef int bool;
 #define ON TRUE
 #define OFF FALSE
 
-#define DEBUG 0
+#define DEBUG 1
 
 void die(int signal);
 typedef void (*pc)();

@@ -10,7 +10,7 @@
 #include "kbcrt.h"
 #include "userAPI.h"
 #include "rtx_init.h"
-
+#include "procABC.h"
 
 void processP()
 {
@@ -90,18 +90,17 @@ int main()
     	cleanup();
     }
 
-    /*
     MsgEnv* timer_env = request_msg_env();
     k_request_delay(3,WAKEUP10,timer_env);
     MsgEnv* timer_env2 = request_msg_env();
     k_request_delay(6,WAKEUP10,timer_env2);
 
     processP();
-	*/
+
 
     procA();
-    MsgEnv *env = request_msg_env();
-    send_message(PROCA_ID,env);
+    //MsgEnv *env = request_msg_env();
+    //send_message(PROCA_ID,env);
 
     while(1);
 

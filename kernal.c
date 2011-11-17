@@ -184,7 +184,7 @@ int k_request_delay(int delay, int wakeup_code, MsgEnv *msg_env)
 
 void k_process_switch(ProcessState next_state)
 {
-	pcb* next_process = proc_q_dequeue(rdy_proc_queue);
+	pcb* next_process = (pcb*)proc_q_dequeue(rdy_proc_queue);
 	// Note this is not checking for null process. It is just for checking th dequeue
 	// was successful
 	if (next_process != NULL)
@@ -256,7 +256,7 @@ int k_change_priority(int target_priority, int target_pid)
 }
 int k_get_trace_buffer(MsgEnv* env)
 {
- return NULL;
+    return 0;
 }
 
 /*

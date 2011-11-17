@@ -20,5 +20,6 @@ int terminate();
 int change_priority(int new_priority, int target_pid);
 
 int get_trace_buffer(MsgEnv *env);
+int request_delay(int delay, int wakeup_code, MsgEnv *msg_env);
 
 #endif
