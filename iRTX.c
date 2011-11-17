@@ -14,6 +14,18 @@
 
 void processP()
 {
+
+	MsgEnv* env = (MsgEnv*) request_msg_env();
+	send_message(PROCA_ID,env);
+
+	//MsgEnv* env2 = (MsgEnv*)receive_message();
+	//while (env2==NULL) {
+	//	env2 = (MsgEnv*)receive_message();
+	//}
+
+	return;
+
+	/*
     ps("ProcessP Started");
     const tWait = 500000;
 	MsgEnv* env;
@@ -59,8 +71,8 @@ void processP()
 		}
 	}
     release_message_env(env);
+    */
 }
-
 
 void die(int signal)
 {
@@ -93,8 +105,10 @@ int main()
     MsgEnv* timer_env2 = request_msg_env();
     k_request_delay(6,WAKEUP10,timer_env2);*/
 
+
     processP();
 
+    ps("PROC A");
 
    // procA();
     //MsgEnv *env = request_msg_env();
