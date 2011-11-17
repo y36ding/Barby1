@@ -89,3 +89,11 @@ int get_trace_buffer(MsgEnv *env)
 	atomic(OFF);
 	return ret;
 }
+
+int request_delay(int delay, int wakeup_code, MsgEnv *msg_env)
+{
+	atomic(ON);
+	int ret = request_delay(delay,wakeup_code,msg_env);
+	atomic(OFF);
+	return ret;
+}

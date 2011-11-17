@@ -20,6 +20,7 @@
 
 #include "iProcs.h"
 #include "kbcrt.h"
+#include "procABC.h"
 
 #include <stdint.h>
 #include <stddef.h>
@@ -41,9 +42,9 @@
 #define MSG_ENV_SIZE 100
 #define MSG_ENV_COUNT 50
 #define NUM_PRIORITY_LEVEL 5
-#define PROCESS_COUNT 4
 #define STACK_SIZE              (4*4096)
 #define STK_OFFSET            16
+#define PROCESS_COUNT 7
 #define NUM_PRIORITIES 4
 #define TRACE_LOG_SIZE 16
 
@@ -147,6 +148,7 @@ TraceBuffer receive_trace_buf;
 pcb* current_process;
 pcb* prev_process;
 MsgEnvQ* free_env_queue;
+MsgEnvQ* blocked_queue;
 pcb* pcb_list[PROCESS_COUNT];
 MsgEnvQ* displayQ;
 proc_queue* rdy_proc_queue;
