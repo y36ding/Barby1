@@ -7,13 +7,13 @@
 
 // Initialization Table
 InitProc init_table[PROCESS_COUNT] = {
-		{"Keyboard I proc\0", KB_I_PROCESS_ID, 0, TRUE},
-		{"CRT I proc\0", CRT_I_PROCESS_ID,0, TRUE},
-		{"P Process\0", P_PROCESS_ID,0, FALSE},
-		{"Timer I process\0", TIMER_I_PROCESS_ID,0, TRUE},
-		{"Process A\0", PROCA_ID,0, FALSE},
+		{"Keyboard I proc\0", KB_I_PROCESS_ID, 0, TRUE, kbd_i_proc},
+		{"CRT I proc\0", CRT_I_PROCESS_ID, 0, TRUE, crt_i_proc},
+		{"P Process\0", P_PROCESS_ID, 0, FALSE, processP},
+		{"Timer I process\0", TIMER_I_PROCESS_ID,0, TRUE, timer_i_proc}
+		/*{"Process A\0", PROCA_ID,0, FALSE},
 		{"process B\0", PROCB_ID,0, FALSE},
-		{"Process C\0", PROCC_ID,0, FALSE},
+		{"Process C\0", PROCC_ID,0, FALSE},*/
 
 };
 
@@ -27,8 +27,6 @@ int init_globals() {
 	sfilename = "keyboardBuffer";  //the name of the keyboard_memory file
 	cfilename = "crtBuffer";  //the name of the crt_memory file
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-	ProcessPQ = (proc_pq*)proc_pq_create(NUM_PRIORITIES);
 
 	timeout_q = NULL;
 	fflush(stdout);
@@ -44,6 +42,12 @@ int init_all_lists()
 
 	free_env_queue = (MsgEnvQ*)MsgEnvQ_create();
 	displayQ = (MsgEnvQ*)MsgEnvQ_create();
+	rdy_proc_queue =  (proc_queue*)proc_q_create();
+
+	send_trace_buf.head = 0;
+	send_trace_buf.count = 0;
+	receive_trace_buf.head = 0;
+	receive_trace_buf.count = 0;
 
 	for (i = 0; i < PROCESS_COUNT; ++i)
 	{
@@ -59,6 +63,10 @@ int init_all_lists()
 		pcb_list[i]->name = init_table[i].name;
 		pcb_list[i]->rcv_msg_queue = (MsgEnvQ*)MsgEnvQ_create();
 		pcb_list[i]->is_i_process = init_table[i].is_i_process;
+		pcb_list[i]->pc_location = init_table[i].pc_location;
+		pcb_list[i]->stack = malloc(sizeof(STACK_SIZE));
+		pcb_list[i]->next_pcb = NULL;
+		pcb_list[i]->a_count = 0;
 	}
 
 	for (i = 0; i < MSG_ENV_COUNT; i++)
@@ -143,11 +151,6 @@ int init_mmaps() {
 		sprintf(childarg1, "%d", mypid); // convert to string to pass to child
 	    sprintf(childarg2, "%d", fid);   // convert the file identifier
 
-
-		// now start doing whatever work you are supposed to do
-		// in this case, do nothing; only the keyboard handler will do work
-
-		printf("\nWelcome to the CCI, the OS is at your disposal: \n");
 
 		// create the keyboard reader process
 		// fork() creates a second process identical to the current process,
@@ -291,6 +294,9 @@ void cleanup()
 	int i;
 	ps("Freeing All Queues");
 	MsgEnvQ_destroy(free_env_queue);
+	MsgEnvQ_destroy(displayQ);
+	proc_q_destroy(rdy_proc_queue);
+
 	ps("Freeing PCBs\n");
 	for (i = 0; i < PROCESS_COUNT; ++i)
 	{

@@ -20,4 +20,15 @@ void k_return_from_switch();
 
 int k_request_delay(int delay, int wakeup_code, MsgEnv *msg_env);
 
+void k_process_switch(ProcessState next_state);
+void k_context_switch(jmp_buf* prev, jmp_buf* next);
+
+int k_release_processor();
+int k_request_process_status(MsgEnv *env);
+int k_terminate();
+int k_change_priority(int new_priority, int target_pid);
+
+//int k_log_message(MsgEnv* env, TraceBuffer* buff);
+int k_get_trace_buffer(MsgEnv* env);
+
 #endif

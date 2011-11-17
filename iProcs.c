@@ -31,7 +31,7 @@ void crt_i_proc(int signum)
 				return;
 			}
 			envTemp->msg_type = DISPLAY_ACK;
-			k_send_message(P_PROCESS_ID, envTemp);
+			k_send_message(envTemp->sender_pid, envTemp);
 			ps("Display ACK sent by crt");
 			k_return_from_switch();
 			return;
