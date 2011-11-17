@@ -67,26 +67,24 @@ int k_send_message(int dest_process_id, MsgEnv *msg_envelope)
 		printf("message SENT on enqueued on PID %i and its size is %i\n",dest_pcb->pid,MsgEnvQ_size(dest_pcb->rcv_msg_queue));
 		pm(msg_envelope);
 	}
+	k_log_event(msg_envelope, &send_trace_buf);
 	return SUCCESS;
 }
 
 MsgEnv* k_receive_message()
 {
-	MsgEnv* ret = NULL;
 	if (DEBUG==1) {
 		fflush(stdout);
 		//printf("Current PCB msgQ size is %i for PID %i\n", MsgEnvQ_size(current_process->rcv_msg_queue), current_process->pid );
 	}
-	//printf("===CURRENT PROCESS = %i\n",current_process->pid);
+	if (current_process->is_i_process == TRUE || current_process->state == NEVER_BLK_RCV)
+		return NULL;
+
+	MsgEnv* ret = NULL;
 	if (MsgEnvQ_size(current_process->rcv_msg_queue) > 0){
 		ret = (MsgEnv*)MsgEnvQ_dequeue(current_process->rcv_msg_queue);
+		k_log_event(ret, &receive_trace_buf);
 	}
-	else
-	{
-		if (current_process->is_i_process == TRUE || current_process->state == NEVER_BLK_RCV)
-			return ret;
-	}
-
 	return ret;
 }
 
@@ -254,15 +252,10 @@ int k_change_priority(int target_priority, int target_pid)
     }
     return SUCCESS;
 }
-int k_get_trace_buffer(MsgEnv* env)
-{
- return NULL;
-}
 
-/*
-int get_trace_tail(TraceBuffer* trace_buf)
+int get_trace_tail(TraceBuffer* trace_buff)
 {
-	return (trace_buf.head + trace_buff.count)%TRACE_LOG_SIZE;
+	return (trace_buff->head + trace_buff->count)%TRACE_LOG_SIZE;
 }
 
 //env trace helper function for k_send and k_recieve to log events
@@ -272,31 +265,32 @@ int k_log_event(TraceBuffer* trace_buf, MsgEnv *env)
 		return NULL_ARGUMENT;
 
 	int tail = get_trace_tail(trace_buf);
-	trace_buf->trace_log[tail].dest_pid = env.dest_pid;
-	trace_buf->trace_log[tail].sender_pid = env.sender_pid;
-	trace_buf->trace_log[tail].msg_type = env.msg_type;
+	trace_buf->trace_log[tail].dest_pid = env->dest_pid;
+	trace_buf->trace_log[tail].sender_pid = env->sender_pid;
+	trace_buf->trace_log[tail].msg_type = env->msg_type;
 	trace_buf->trace_log[tail].time_stamp = 4; // Should this be a RTX function?
-	if (count == TRACE_LOG_SIZE)
-		trace_buf.head = (head + 1)%TRACE_LOG_SIZE;
+	if (trace_buf->count == TRACE_LOG_SIZE)
+		trace_buf->head = (trace_buf->head + 1)%TRACE_LOG_SIZE;
 	else
-		count++;
+		trace_buf->count++;
 	return SUCCESS;
 }
 
-int k_get_trace_buffers( MsgEnv *msg_env )
+int k_get_trace_buffer( MsgEnv *msg_env )
 {
 	if (msg_env == NULL)
 		return NULL;
 
-    int send_tail = get_trace_tail(send_trace_buf);
-    int receive_tail = get_trace_tail(receive_trace_buf);
+    int send_tail = get_trace_tail(&send_trace_buf);
+    int receive_tail = get_trace_tail(&receive_trace_buf);
+    int i;
 
     // Assign the memory locations which will be written to in the message envelope
-    TraceLog* send_log_stack = (TraceLog*) msg_env->msg;
+    TraceLog* send_log_stack = (TraceLog*) msg_env->data;
     i = send_trace_buf.head;
     while(i != send_tail)
     {
-    	TraceLog* log = send_trace_buf.trace_log[i];
+    	TraceLog* log = &send_trace_buf.trace_log[i];
     	send_log_stack->dest_pid = log->dest_pid;
     	send_log_stack->msg_type = log->msg_type;
     	send_log_stack->sender_pid = log->sender_pid;
@@ -305,11 +299,11 @@ int k_get_trace_buffers( MsgEnv *msg_env )
     	i = (i+1)%TRACE_LOG_SIZE;
     }
 
-    TraceLog* receive_log_stack = send_log_stack + send_trace_buf->count;
+    TraceLog* receive_log_stack = send_log_stack + send_trace_buf.count;
     i =  receive_trace_buf.head;
     while(i != receive_tail)
     {
-    	TraceLog* log = receive_trace_buf.trace_log[i];
+    	TraceLog* log = &receive_trace_buf.trace_log[i];
     	receive_log_stack->dest_pid = log->dest_pid;
     	receive_log_stack->msg_type = log->msg_type;
     	receive_log_stack->sender_pid = log->sender_pid;
@@ -317,5 +311,5 @@ int k_get_trace_buffers( MsgEnv *msg_env )
     	receive_log_stack++;
     	i = (i+1)%TRACE_LOG_SIZE;
     }
-    return CODE_SUCCESS;
-}*/
+    return SUCCESS;
+}

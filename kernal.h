@@ -28,7 +28,7 @@ int k_request_process_status(MsgEnv *env);
 int k_terminate();
 int k_change_priority(int new_priority, int target_pid);
 
-//int k_log_message(MsgEnv* env, TraceBuffer* buff);
+int k_log_message(MsgEnv* env, TraceBuffer* buff);
 int k_get_trace_buffer(MsgEnv* env);
 
 #endif

@@ -42,7 +42,8 @@
 #define MSG_ENV_COUNT 50
 #define NUM_PRIORITY_LEVEL 5
 #define PROCESS_COUNT 4
-#define STACK_SIZE 100
+#define STACK_SIZE              (4*4096)
+#define STK_OFFSET            16
 #define NUM_PRIORITIES 4
 #define TRACE_LOG_SIZE 16
 
@@ -60,7 +61,7 @@ typedef int bool;
 #define ON TRUE
 #define OFF FALSE
 
-#define DEBUG 0
+#define DEBUG 1
 
 void die(int signal);
 typedef void (*pc)();
@@ -98,7 +99,7 @@ typedef struct process_control_block {
 	MsgEnvQ*  rcv_msg_queue;
 	struct process_control_block* next;
 	jmp_buf* buf;
-	pc pc_location;
+	pc location;
    	char * stack;
 	int a_count;
 	bool is_i_process;

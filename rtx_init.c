@@ -3,6 +3,7 @@
 #include "kbcrt.h"
 #include "MsgEnvQueue.h"
 #include "processQ.h"
+#include <stdlib.h>
 
 
 // Initialization Table
@@ -39,6 +40,7 @@ int init_all_lists()
 {
 	int i;
 	int init_status = SUCCESS;
+	jmp_buf* kernel_buf;
 
 	free_env_queue = (MsgEnvQ*)MsgEnvQ_create();
 	displayQ = (MsgEnvQ*)MsgEnvQ_create();
@@ -63,10 +65,29 @@ int init_all_lists()
 		pcb_list[i]->name = init_table[i].name;
 		pcb_list[i]->rcv_msg_queue = (MsgEnvQ*)MsgEnvQ_create();
 		pcb_list[i]->is_i_process = init_table[i].is_i_process;
-		pcb_list[i]->pc_location = init_table[i].pc_location;
-		pcb_list[i]->stack = malloc(sizeof(STACK_SIZE));
+		pcb_list[i]->location = init_table[i].pc_location;
+		pcb_list[i]->stack = malloc(sizeof(STACK_SIZE)) + STACK_SIZE - STK_OFFSET; // stack grows down
 		pcb_list[i]->next_pcb = NULL;
 		pcb_list[i]->a_count = 0;
+
+        // Initialize the stack and start pc
+      /*  if (setjmp(kernel_buf) ==  0)
+        {
+            __asm__("movl %0, %%esp":"=g" (pcb_list[i]->stack));
+            if (setjmp(pcb_list[i]->buf) == 0)
+            {
+                longjmp(kernel_buf, 1);
+            }
+            else
+            {
+                current_process->location();
+#ifdef DEBUG_KERN
+                printf("ERROR: Process <%s> stopped executing! \n",
+                        current_process->name);
+#endif
+                k_terminate();
+            }
+        }*/
 	}
 
 	for (i = 0; i < MSG_ENV_COUNT; i++)
